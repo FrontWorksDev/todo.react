@@ -1,25 +1,58 @@
-import React from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import React, { useState } from "react";
+import { Box, Button, TextField } from "@mui/material";
+import { v1 } from "uuid";
+import styles from "./App.module.scss";
+
+type Task = {
+  id: string;
+  title: string;
+};
 
 function App() {
+  const [items, setItems] = useState<Task[]>([]);
+  const [task, setTask] = useState("");
+
+  const handleSubmit = (
+    e:
+      | React.MouseEvent<HTMLAnchorElement>
+      | React.MouseEvent<HTMLButtonElement>,
+    newTask: string
+  ) => {
+    e.preventDefault();
+    const taskData: Task = {
+      id: v1(),
+      title: newTask,
+    };
+    setItems([...items, taskData]);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Box className="App" sx={{ p: 1 }}>
+      <form action="?" className={styles.form}>
+        <TextField
+          label="Input Task"
+          variant="standard"
+          margin="none"
+          className="form__field"
+          onChange={(e) => setTask(e.target.value)}
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          sx={{ mt: 2 }}
+          onClick={(e) => handleSubmit(e, task)}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          追加
+        </Button>
+      </form>
+
+      <ul>
+        {items.map(({ id, title }) => (
+          <li key={id}>{title}</li>
+        ))}
+      </ul>
+    </Box>
   );
 }
 
