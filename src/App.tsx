@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import {
+  Box,
+  Button,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  TextField,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { v1 } from "uuid";
 import styles from "./App.module.scss";
 
@@ -47,11 +56,20 @@ function App() {
         </Button>
       </form>
 
-      <ul>
+      <List>
         {items.map(({ id, title }) => (
-          <li key={id}>{title}</li>
+          <ListItem
+            key={id}
+            secondaryAction={
+              <IconButton edge="end" aria-label="delete">
+                <DeleteIcon />
+              </IconButton>
+            }
+          >
+            <ListItemText primary={title} />
+          </ListItem>
         ))}
-      </ul>
+      </List>
     </Box>
   );
 }
