@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogTitle,
   IconButton,
   List,
   ListItem,
@@ -20,6 +23,8 @@ type Task = {
 function App() {
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
 
   const handleSubmit = (
     e:
@@ -33,6 +38,21 @@ function App() {
       title: newTask,
     };
     setItems([...items, taskData]);
+  };
+
+  const handleDelete = (id: string) => {
+    setOpen(true);
+    setValue(id);
+  };
+
+  const handleCancel = () => {
+    setOpen(false);
+  };
+
+  const handleOk = () => {
+    const deletedItems = items.filter((item) => item.id !== value);
+    setItems(deletedItems);
+    setOpen(false);
   };
 
   return (
@@ -61,7 +81,11 @@ function App() {
           <ListItem
             key={id}
             secondaryAction={
-              <IconButton edge="end" aria-label="delete">
+              <IconButton
+                edge="end"
+                aria-label="delete"
+                onClick={() => handleDelete(id)}
+              >
                 <DeleteIcon />
               </IconButton>
             }
@@ -70,6 +94,19 @@ function App() {
           </ListItem>
         ))}
       </List>
+      <Dialog
+        open={open}
+        sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
+        maxWidth="xs"
+      >
+        <DialogTitle>Do you want to delete the data?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => handleCancel()} color="error">
+            No
+          </Button>
+          <Button onClick={() => handleOk()}>Yes</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
