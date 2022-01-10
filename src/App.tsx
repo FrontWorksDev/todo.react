@@ -13,11 +13,13 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { v1 } from "uuid";
+import axios from "axios";
 import styles from "./App.module.scss";
 
 type Task = {
-  id: string;
+  slug: string;
   title: string;
+  status: number;
 };
 
 function App() {
@@ -34,10 +36,15 @@ function App() {
   ) => {
     e.preventDefault();
     const taskData: Task = {
-      id: v1(),
+      slug: v1(),
       title: newTask,
+      status: 1,
     };
     setItems([...items, taskData]);
+
+    axios
+      .post("http://localhost:8080/task/v1/add", taskData)
+      .catch((err) => new Error(err));
   };
 
   const handleDelete = (id: string) => {
@@ -50,7 +57,7 @@ function App() {
   };
 
   const handleOk = () => {
-    const deletedItems = items.filter((item) => item.id !== value);
+    const deletedItems = items.filter((item) => item.slug !== value);
     setItems(deletedItems);
     setOpen(false);
   };
@@ -77,14 +84,14 @@ function App() {
       </form>
 
       <List>
-        {items.map(({ id, title }) => (
+        {items.map(({ slug, title }) => (
           <ListItem
-            key={id}
+            key={slug}
             secondaryAction={
               <IconButton
                 edge="end"
                 aria-label="delete"
-                onClick={() => handleDelete(id)}
+                onClick={() => handleDelete(slug)}
               >
                 <DeleteIcon />
               </IconButton>
