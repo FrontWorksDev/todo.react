@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { v1 } from "uuid";
-import axios from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import styles from "./App.module.scss";
 
 type Task = {
@@ -22,11 +22,27 @@ type Task = {
   status: number;
 };
 
+type Tasks = {
+  items: Task[];
+};
+
+const options: AxiosRequestConfig = {
+  url: "http://localhost:8080/task/v1/list",
+  method: "GET",
+};
+
 function App() {
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    axios(options).then((res: AxiosResponse<Tasks>) => {
+      const data = res.data.items;
+      setItems(data);
+    });
+  }, []);
 
   const handleSubmit = (
     e:
