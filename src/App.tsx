@@ -17,9 +17,13 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import styles from "./App.module.scss";
 
 type Task = {
+  ID: number;
   slug: string;
   title: string;
   status: number;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+  DeletedAt?: string | null;
 };
 
 type Tasks = {
@@ -35,7 +39,7 @@ function App() {
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(0);
 
   useEffect(() => {
     axios(options).then((res: AxiosResponse<Tasks>) => {
@@ -52,6 +56,7 @@ function App() {
   ) => {
     e.preventDefault();
     const taskData: Task = {
+      ID: 0,
       slug: v1(),
       title: newTask,
       status: 1,
@@ -63,7 +68,7 @@ function App() {
       .catch((err) => new Error(err));
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     setOpen(true);
     setValue(id);
   };
@@ -72,9 +77,12 @@ function App() {
     setOpen(false);
   };
 
-  const handleOk = () => {
-    const deletedItems = items.filter((item) => item.slug !== value);
+  const handleOk = async () => {
+    const deletedItems = items.filter((item) => item.ID !== value);
     setItems(deletedItems);
+    await axios
+      .delete(`http://localhost:8080/task/v1/delete/${value}`)
+      .catch((err) => new Error(err));
     setOpen(false);
   };
 
@@ -100,14 +108,14 @@ function App() {
       </form>
 
       <List>
-        {items.map(({ slug, title }) => (
+        {items.map(({ slug, title, ID }) => (
           <ListItem
             key={slug}
             secondaryAction={
               <IconButton
                 edge="end"
                 aria-label="delete"
-                onClick={() => handleDelete(slug)}
+                onClick={() => handleDelete(ID)}
               >
                 <DeleteIcon />
               </IconButton>
