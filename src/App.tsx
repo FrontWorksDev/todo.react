@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
   Dialog,
   DialogActions,
+  DialogContent,
   DialogTitle,
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   TextField,
 } from "@mui/material";
@@ -39,7 +41,9 @@ function App() {
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
+  const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     axios(options).then((res: AxiosResponse<Tasks>) => {
@@ -68,6 +72,17 @@ function App() {
       .catch((err) => new Error(err));
   };
 
+  const handleSubmitUpdate = async (editedTitle: string) => {
+    const updateItem = items.map((item) =>
+      item.ID === value ? Object.assign(item, { title: editedTitle }) : item
+    );
+    setItems(updateItem);
+    await axios.put(`http://localhost:8080/task/v1/update/${value}`, {
+      title: editedTitle,
+    });
+    setUpdate(false);
+  };
+
   const handleDelete = (id: number) => {
     setOpen(true);
     setValue(id);
@@ -75,6 +90,7 @@ function App() {
 
   const handleCancel = () => {
     setOpen(false);
+    setUpdate(false);
   };
 
   const handleOk = async () => {
@@ -84,6 +100,12 @@ function App() {
       .delete(`http://localhost:8080/task/v1/delete/${value}`)
       .catch((err) => new Error(err));
     setOpen(false);
+  };
+
+  const handleUpdate = (id: number, title: string) => {
+    setUpdate(true);
+    setTask(title);
+    setValue(id);
   };
 
   return (
@@ -121,16 +143,47 @@ function App() {
               </IconButton>
             }
           >
-            <ListItemText primary={title} />
+            <ListItemButton onClick={() => handleUpdate(ID, title)}>
+              <ListItemText primary={title} />
+            </ListItemButton>
           </ListItem>
         ))}
       </List>
+      <Dialog
+        open={update}
+        sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
+        maxWidth="xs"
+        onClose={handleCancel}
+      >
+        <DialogTitle>Update</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="Title"
+            fullWidth
+            variant="standard"
+            defaultValue={task}
+            inputRef={titleRef}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => handleCancel()} color="error">
+            Cancel
+          </Button>
+          <Button onClick={() => handleSubmitUpdate(titleRef.current!.value)}>
+            Update
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog
         open={open}
         sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
         maxWidth="xs"
       >
         <DialogTitle>Do you want to delete the data?</DialogTitle>
+
         <DialogActions>
           <Button onClick={() => handleCancel()} color="error">
             No
