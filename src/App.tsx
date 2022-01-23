@@ -57,9 +57,6 @@ function App() {
     const options: AxiosRequestConfig = {
       url: `${url}task/v1/list`,
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     };
 
     axios(options).then((res: AxiosResponse<Tasks>) => {
