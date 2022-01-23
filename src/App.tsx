@@ -32,20 +32,33 @@ type Tasks = {
   items: Task[];
 };
 
-const options: AxiosRequestConfig = {
-  url: "http://localhost:8080/task/v1/list",
-  method: "GET",
-};
-
 function App() {
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
   const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
+  const [endPoint, setEndPoint] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
+  const createEndPoint = () => {
+    let url = "";
+    if (window.location.hostname.includes("localhost")) {
+      url = "http://localhost:8080/";
+    } else {
+      url = "https://shielded-earth-14324.herokuapp.com/";
+    }
+
+    return url;
+  };
 
   useEffect(() => {
+    const url = createEndPoint();
+    setEndPoint(url);
+    const options: AxiosRequestConfig = {
+      url: `${url}task/v1/list`,
+      method: "GET",
+    };
+
     axios(options).then((res: AxiosResponse<Tasks>) => {
       const data = res.data.items;
       setItems(data);
@@ -68,7 +81,7 @@ function App() {
     setItems([...items, taskData]);
 
     axios
-      .post("http://localhost:8080/task/v1/add", taskData)
+      .post(`${endPoint}task/v1/add`, taskData)
       .catch((err) => new Error(err));
   };
 
@@ -77,7 +90,7 @@ function App() {
       item.ID === value ? Object.assign(item, { title: editedTitle }) : item
     );
     setItems(updateItem);
-    await axios.put(`http://localhost:8080/task/v1/update/${value}`, {
+    await axios.put(`${endPoint}task/v1/update/${value}`, {
       title: editedTitle,
     });
     setUpdate(false);
@@ -97,7 +110,7 @@ function App() {
     const deletedItems = items.filter((item) => item.ID !== value);
     setItems(deletedItems);
     await axios
-      .delete(`http://localhost:8080/task/v1/delete/${value}`)
+      .delete(`${endPoint}task/v1/delete/${value}`)
       .catch((err) => new Error(err));
     setOpen(false);
   };
