@@ -6,17 +6,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
   TextField,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { v1 } from "uuid";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import styles from "./App.module.scss";
+import CreateField from "./components/CreateField";
+import TaskList from "./components/TaskList";
 
 type Task = {
   ID: number;
@@ -65,26 +60,6 @@ function App() {
     });
   }, []);
 
-  const handleSubmit = (
-    e:
-      | React.MouseEvent<HTMLAnchorElement>
-      | React.MouseEvent<HTMLButtonElement>,
-    newTask: string
-  ) => {
-    e.preventDefault();
-    const taskData: Task = {
-      ID: 0,
-      slug: v1(),
-      title: newTask,
-      status: 1,
-    };
-    setItems([...items, taskData]);
-
-    axios
-      .post(`${endPoint}task/v1/add`, taskData)
-      .catch((err) => new Error(err));
-  };
-
   const handleSubmitUpdate = async (editedTitle: string) => {
     const updateItem = items.map((item) =>
       item.ID === value ? Object.assign(item, { title: editedTitle }) : item
@@ -121,45 +96,23 @@ function App() {
     setValue(id);
   };
 
+  const updateItem = (newItem: Task): void => {
+    setItems([...items, newItem]);
+  };
+
   return (
     <Box className="App" sx={{ p: 1 }}>
-      <form action="?" className={styles.form}>
-        <TextField
-          label="Input Task"
-          variant="standard"
-          margin="none"
-          className="form__field"
-          onChange={(e) => setTask(e.target.value)}
-        />
-
-        <Button
-          type="submit"
-          variant="contained"
-          sx={{ mt: 2 }}
-          onClick={(e) => handleSubmit(e, task)}
-        >
-          追加
-        </Button>
-      </form>
-
+      <CreateField updateItem={updateItem} />
       <List>
         {items.map(({ slug, title, ID }) => (
-          <ListItem
+          <TaskList
             key={slug}
-            secondaryAction={
-              <IconButton
-                edge="end"
-                aria-label="delete"
-                onClick={() => handleDelete(ID)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            }
-          >
-            <ListItemButton onClick={() => handleUpdate(ID, title)}>
-              <ListItemText primary={title} />
-            </ListItemButton>
-          </ListItem>
+            handleDelete={handleDelete}
+            handleUpdate={handleUpdate}
+            slug={slug}
+            ID={ID}
+            title={title}
+          />
         ))}
       </List>
       <Dialog
