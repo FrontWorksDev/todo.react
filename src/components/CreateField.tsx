@@ -47,6 +47,7 @@ function CreateField({ updateItem }: Props) {
       status: 1,
     };
     updateItem(taskData);
+    setTask("");
 
     axios
       .post(`${endPoint}task/v1/add`, taskData)
@@ -65,6 +66,7 @@ function CreateField({ updateItem }: Props) {
         variant="standard"
         margin="none"
         className="form__field"
+        value={task}
         onChange={(e) => setTask(e.target.value)}
       />
 
