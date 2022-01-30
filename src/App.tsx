@@ -60,7 +60,13 @@ function App() {
     });
   }, []);
 
-  const handleSubmitUpdate = async (editedTitle: string) => {
+  const handleSubmitUpdate = async (
+    editedTitle: string,
+    e?: React.KeyboardEvent
+  ) => {
+    if (e && e.code !== "Enter") {
+      return;
+    }
     const updateItem = items.map((item) =>
       item.ID === value ? Object.assign(item, { title: editedTitle }) : item
     );
@@ -109,7 +115,6 @@ function App() {
             key={slug}
             handleDelete={handleDelete}
             handleUpdate={handleUpdate}
-            slug={slug}
             ID={ID}
             title={title}
           />
@@ -132,6 +137,7 @@ function App() {
             variant="standard"
             defaultValue={task}
             inputRef={titleRef}
+            onKeyPress={(e) => handleSubmitUpdate(titleRef.current!.value, e)}
           />
         </DialogContent>
         <DialogActions>
