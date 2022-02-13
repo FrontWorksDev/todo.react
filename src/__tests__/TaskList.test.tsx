@@ -10,10 +10,10 @@ type Task = {
   ID: number;
   slug: string;
   title: string;
-  status: number;
   CreatedAt?: string;
   UpdatedAt?: string;
   DeletedAt?: string | null;
+  completed: boolean;
 };
 
 let items: Task[] = [];
@@ -116,5 +116,51 @@ describe("task lists", () => {
     user.click(deletedItem);
     expect(value).toEqual(1);
     expect(open).toBeTruthy();
+  });
+});
+
+describe("Complete Task", () => {
+  test("checked task", () => {
+    let checked = false;
+    let completed = false;
+    let taskId = 0;
+    let update = false;
+    let task = "";
+    let value = 0;
+    let open = false;
+    const handleUpdate = (id: number, title: string) => {
+      update = true;
+      task = title;
+      value = id;
+    };
+
+    const handleDelete = (id: number) => {
+      open = true;
+      value = id;
+    };
+    const handleComplete = (id: number) => {
+      checked = true;
+      taskId = id;
+    };
+
+    const { getByLabelText } = render(
+      <TaskList
+        handleUpdate={handleUpdate}
+        handleDelete={handleDelete}
+        ID={1}
+        title="hogehoge"
+        handleComplete={handleComplete}
+        checked={completed}
+      />
+    );
+
+    expect(checked).toBeFalsy();
+    expect(taskId).toEqual(0);
+
+    const completeButton = getByLabelText(/Complete/i);
+    user.click(completeButton);
+
+    expect(checked).toBeTruthy();
+    expect(taskId).toEqual(1);
   });
 });
