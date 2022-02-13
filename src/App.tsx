@@ -17,7 +17,7 @@ type Task = {
   ID: number;
   slug: string;
   title: string;
-  status: number;
+  completed: boolean;
   CreatedAt?: string;
   UpdatedAt?: string;
   DeletedAt?: string | null;
@@ -102,6 +102,18 @@ function App() {
     setValue(id);
   };
 
+  const handleComplete = async (id: number) => {
+    setValue(id);
+
+    const updateItem = items.map((item) =>
+      item.ID === id ? Object.assign(item, { completed: true }) : item
+    );
+    setItems(updateItem);
+    await axios.put(`${endPoint}task/v1/update/${id}`, {
+      completed: true,
+    });
+  };
+
   const updateItem = (newItem: Task): void => {
     setItems([...items, newItem]);
   };
@@ -110,13 +122,15 @@ function App() {
     <Box className="App" sx={{ p: 1 }}>
       <CreateField updateItem={updateItem} />
       <List>
-        {items.map(({ slug, title, ID }) => (
+        {items.map(({ slug, title, ID, completed }) => (
           <TaskList
             key={slug}
             handleDelete={handleDelete}
             handleUpdate={handleUpdate}
+            handleComplete={handleComplete}
             ID={ID}
             title={title}
+            checked={completed}
           />
         ))}
       </List>
