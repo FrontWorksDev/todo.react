@@ -10,6 +10,11 @@ import {
   TextField,
 } from "@mui/material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import {
+  GoogleLogin,
+  GoogleLoginResponse,
+  GoogleLoginResponseOffline,
+} from "react-google-login";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
 
@@ -27,14 +32,24 @@ type Tasks = {
   items: Task[];
 };
 
+type User = {
+  name: string;
+  email: string;
+  image: string;
+};
+
 function App() {
+  const ClientId = process.env.REACT_APP_CLIENT_ID!;
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
   const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
   const [endPoint, setEndPoint] = useState("");
+  const [accessToken, setAccessToken] = useState("");
+  const [user, setUser] = useState<User>({ name: "", email: "", image: "" });
   const titleRef = useRef<HTMLInputElement>(null);
+
   const createEndPoint = () => {
     let url = "";
     if (window.location.hostname.includes("localhost")) {
@@ -44,6 +59,28 @@ function App() {
     }
 
     return url;
+  };
+
+  const onSuccess = (res: GoogleLoginResponse | GoogleLoginResponseOffline) => {
+    if ("accessToken" in res) {
+      const userInfo: User = {
+        name: res.profileObj.name,
+        email: res.profileObj.email,
+        image: res.profileObj.imageUrl,
+      };
+
+      setAccessToken(res.accessToken);
+      sessionStorage.token = res.accessToken;
+      setUser(userInfo);
+
+      axios
+        .post(`${endPoint}user/v1/login`, userInfo)
+        .catch((err) => new Error(err));
+    }
+  };
+
+  const onFailure = (res: any) => {
+    alert(JSON.stringify(res));
   };
 
   useEffect(() => {
@@ -120,6 +157,18 @@ function App() {
 
   return (
     <Box className="App" sx={{ p: 1 }}>
+      {accessToken === "" ? (
+        <GoogleLogin
+          clientId={ClientId}
+          buttonText="Login"
+          onSuccess={onSuccess}
+          onFailure={onFailure}
+          scope="openid"
+          cookiePolicy="single_host_origin"
+        />
+      ) : (
+        user.email
+      )}
       <CreateField updateItem={updateItem} />
       <List>
         {items.map(({ slug, title, ID, completed }) => (
