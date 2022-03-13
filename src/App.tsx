@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -9,11 +9,12 @@ import {
   List,
   TextField,
 } from "@mui/material";
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import {
   GoogleLogin,
   GoogleLoginResponse,
   GoogleLoginResponseOffline,
+  GoogleLogout,
 } from "react-google-login";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
@@ -61,7 +62,14 @@ function App() {
     return url;
   };
 
-  const onSuccess = (res: GoogleLoginResponse | GoogleLoginResponseOffline) => {
+  const onLogoutSuccess = () => {
+    const url = createEndPoint();
+    axios.post(`${url}logout`, 22).catch((err) => new Error(err));
+  };
+
+  const onSuccess = async (
+    res: GoogleLoginResponse | GoogleLoginResponseOffline
+  ) => {
     if ("accessToken" in res) {
       const userInfo: User = {
         name: res.profileObj.name,
@@ -73,8 +81,14 @@ function App() {
       sessionStorage.token = res.accessToken;
       setUser(userInfo);
 
+      const url = createEndPoint();
+      setEndPoint(url);
       axios
-        .post(`${endPoint}user/v1/login`, userInfo)
+        .post(`${url}login`, userInfo)
+        .then((r: AxiosResponse<Tasks>) => {
+          setItems(r.data.items);
+          console.log(r.data);
+        })
         .catch((err) => new Error(err));
     }
   };
@@ -82,20 +96,6 @@ function App() {
   const onFailure = (res: any) => {
     alert(JSON.stringify(res));
   };
-
-  useEffect(() => {
-    const url = createEndPoint();
-    setEndPoint(url);
-    const options: AxiosRequestConfig = {
-      url: `${url}task/v1/list`,
-      method: "GET",
-    };
-
-    axios(options).then((res: AxiosResponse<Tasks>) => {
-      const data = res.data.items;
-      setItems(data);
-    });
-  }, []);
 
   const handleSubmitUpdate = async (
     editedTitle: string,
@@ -165,10 +165,16 @@ function App() {
           onFailure={onFailure}
           scope="openid"
           cookiePolicy="single_host_origin"
+          isSignedIn
         />
       ) : (
         user.email
       )}
+      <GoogleLogout
+        clientId={ClientId}
+        buttonText="Logout"
+        onLogoutSuccess={onLogoutSuccess}
+      />
       <CreateField updateItem={updateItem} />
       <List>
         {items.map(({ slug, title, ID, completed }) => (

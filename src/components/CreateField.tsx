@@ -9,6 +9,7 @@ type Task = {
   slug: string;
   title: string;
   status: number;
+  userID: number;
   CreatedAt?: string;
   UpdatedAt?: string;
   DeletedAt?: string | null;
@@ -45,6 +46,7 @@ function CreateField({ updateItem }: Props) {
       slug: v1(),
       title: newTask,
       status: 1,
+      userID: 0,
     };
     updateItem(taskData);
     setTask("");
