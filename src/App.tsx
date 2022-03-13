@@ -87,13 +87,13 @@ function App() {
         .post(`${url}login`, userInfo)
         .then((r: AxiosResponse<Tasks>) => {
           setItems(r.data.items);
-          console.log(r.data);
         })
         .catch((err) => new Error(err));
     }
   };
 
   const onFailure = (res: any) => {
+    // eslint-disable-next-line no-alert
     alert(JSON.stringify(res));
   };
 
