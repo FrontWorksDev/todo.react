@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -9,13 +9,8 @@ import {
   List,
   TextField,
 } from "@mui/material";
-import axios, { AxiosResponse } from "axios";
-import {
-  GoogleLogin,
-  GoogleLoginResponse,
-  GoogleLoginResponseOffline,
-  GoogleLogout,
-} from "react-google-login";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { useAuth0 } from "@auth0/auth0-react";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
 
@@ -33,24 +28,26 @@ type Tasks = {
   items: Task[];
 };
 
-type User = {
-  name: string;
-  email: string;
-  image: string;
+type Response = {
+  session: string;
 };
 
 function App() {
-  const ClientId = process.env.REACT_APP_CLIENT_ID!;
+  const { loginWithRedirect, logout, isAuthenticated, isLoading, user } =
+    useAuth0();
+  // const ClientId = process.env.REACT_APP_CLIENT_ID!;
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
   const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
   const [endPoint, setEndPoint] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [user, setUser] = useState<User>({ name: "", email: "", image: "" });
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [session, setSession] = useState("");
+  // const [user, setUser] = useState<User>({ name: "", email: "", image: "" });
   const titleRef = useRef<HTMLInputElement>(null);
-
   const createEndPoint = () => {
     let url = "";
     if (window.location.hostname.includes("localhost")) {
@@ -59,42 +56,8 @@ function App() {
       url = "https://shielded-earth-14324.herokuapp.com/";
     }
 
+    setEndPoint(url);
     return url;
-  };
-
-  const onLogoutSuccess = () => {
-    const url = createEndPoint();
-    axios.post(`${url}logout`, 22).catch((err) => new Error(err));
-  };
-
-  const onSuccess = async (
-    res: GoogleLoginResponse | GoogleLoginResponseOffline
-  ) => {
-    if ("accessToken" in res) {
-      const userInfo: User = {
-        name: res.profileObj.name,
-        email: res.profileObj.email,
-        image: res.profileObj.imageUrl,
-      };
-
-      setAccessToken(res.accessToken);
-      sessionStorage.token = res.accessToken;
-      setUser(userInfo);
-
-      const url = createEndPoint();
-      setEndPoint(url);
-      axios
-        .post(`${url}login`, userInfo)
-        .then((r: AxiosResponse<Tasks>) => {
-          setItems(r.data.items);
-        })
-        .catch((err) => new Error(err));
-    }
-  };
-
-  const onFailure = (res: any) => {
-    // eslint-disable-next-line no-alert
-    alert(JSON.stringify(res));
   };
 
   const handleSubmitUpdate = async (
@@ -155,27 +118,92 @@ function App() {
     setItems([...items, newItem]);
   };
 
+  const clickCreate = async () => {
+    await axios.post(`${endPoint}user/v1/signup`, {
+      username,
+      email,
+      password,
+    });
+  };
+  const clickLogin = async () => {
+    await axios
+      .post(`${endPoint}user/v1/login`, {
+        username: "*",
+        email,
+        password,
+      })
+      .then((res: AxiosResponse<Response>) => {
+        setSession(res.data.session);
+      });
+  };
+
+  const clickLogout = () => {};
+
+  useEffect(() => {
+    const url = createEndPoint();
+    setEndPoint(url);
+    const options: AxiosRequestConfig = {
+      url: `${url}task/v1/list/${user?.sub}`,
+      method: "POST",
+    };
+
+    axios(options).then((res: AxiosResponse<Tasks>) => {
+      const data = res.data.items;
+      setItems(data);
+    });
+  }, [user?.sub]);
+
+  if (isLoading) {
+    return <div>Loading ...</div>;
+  }
+
   return (
     <Box className="App" sx={{ p: 1 }}>
-      {accessToken === "" ? (
-        <GoogleLogin
-          clientId={ClientId}
-          buttonText="Login"
-          onSuccess={onSuccess}
-          onFailure={onFailure}
-          scope="openid"
-          cookiePolicy="single_host_origin"
-          isSignedIn
-        />
+      {!isAuthenticated ? (
+        <Button variant="contained" onClick={() => loginWithRedirect()}>
+          Login
+        </Button>
       ) : (
-        user.email
+        <Button
+          variant="contained"
+          onClick={() => logout({ returnTo: window.location.origin })}
+        >
+          Logout
+        </Button>
       )}
-      <GoogleLogout
-        clientId={ClientId}
-        buttonText="Logout"
-        onLogoutSuccess={onLogoutSuccess}
+
+      <TextField
+        label="username"
+        variant="outlined"
+        name="username"
+        onChange={(e) => setUsername(e.target.value)}
       />
-      <CreateField updateItem={updateItem} />
+      <TextField
+        label="email"
+        variant="outlined"
+        name="email"
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <TextField
+        label="password"
+        variant="outlined"
+        name="password"
+        type="password"
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <Button variant="contained" onClick={() => clickCreate()}>
+        Create
+      </Button>
+      {session === "" ? (
+        <Button variant="contained" onClick={() => clickLogin()}>
+          Login
+        </Button>
+      ) : (
+        <Button variant="contained" onClick={() => clickLogout()}>
+          Logout
+        </Button>
+      )}
+      <CreateField updateItem={updateItem} userId={user?.sub!} />
       <List>
         {items.map(({ slug, title, ID, completed }) => (
           <TaskList
