@@ -35,7 +35,6 @@ type Tasks = {
 
 function App() {
   const { isAuthenticated, isLoading, user } = useAuth0();
-  // const ClientId = process.env.REACT_APP_CLIENT_ID!;
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
