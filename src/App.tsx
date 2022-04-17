@@ -17,6 +17,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
+import AuthButton from "./components/AuthButton";
 
 type Task = {
   ID: number;
@@ -33,8 +34,7 @@ type Tasks = {
 };
 
 function App() {
-  const { loginWithRedirect, logout, isAuthenticated, isLoading, user } =
-    useAuth0();
+  const { isAuthenticated, isLoading, user } = useAuth0();
   // const ClientId = process.env.REACT_APP_CLIENT_ID!;
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
@@ -140,9 +140,7 @@ function App() {
             <DialogContentText>ログインをしてください。</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={() => loginWithRedirect()}>
-              Login
-            </Button>
+            <AuthButton />
           </DialogActions>
         </Dialog>
       ) : (
@@ -151,12 +149,7 @@ function App() {
             <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
               Todo.app
             </Typography>
-            <Button
-              variant="contained"
-              onClick={() => logout({ returnTo: window.location.origin })}
-            >
-              Logout
-            </Button>
+            <AuthButton />
           </Toolbar>
         </AppBar>
       )}
