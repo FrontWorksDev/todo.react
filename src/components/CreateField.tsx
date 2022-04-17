@@ -9,6 +9,7 @@ type Task = {
   slug: string;
   title: string;
   status: number;
+  userId: string;
   CreatedAt?: string;
   UpdatedAt?: string;
   DeletedAt?: string | null;
@@ -16,9 +17,10 @@ type Task = {
 
 type Props = {
   updateItem: Function;
+  userId: string;
 };
 
-function CreateField({ updateItem }: Props) {
+function CreateField({ updateItem, userId }: Props) {
   const [task, setTask] = useState("");
   const [endPoint, setEndPoint] = useState("");
 
@@ -45,10 +47,12 @@ function CreateField({ updateItem }: Props) {
       slug: v1(),
       title: newTask,
       status: 1,
+      userId,
     };
     updateItem(taskData);
     setTask("");
 
+    console.log(taskData);
     axios
       .post(`${endPoint}task/v1/add`, taskData)
       .catch((err) => new Error(err));

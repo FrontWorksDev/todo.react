@@ -1,17 +1,23 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
+  AppBar,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   List,
+  Toolbar,
   TextField,
+  Typography,
 } from "@mui/material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { useAuth0 } from "@auth0/auth0-react";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
+import AuthButton from "./components/AuthButton";
 
 type Task = {
   ID: number;
@@ -28,6 +34,7 @@ type Tasks = {
 };
 
 function App() {
+  const { isAuthenticated, isLoading, user } = useAuth0();
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
@@ -43,22 +50,9 @@ function App() {
       url = "https://shielded-earth-14324.herokuapp.com/";
     }
 
+    setEndPoint(url);
     return url;
   };
-
-  useEffect(() => {
-    const url = createEndPoint();
-    setEndPoint(url);
-    const options: AxiosRequestConfig = {
-      url: `${url}task/v1/list`,
-      method: "GET",
-    };
-
-    axios(options).then((res: AxiosResponse<Tasks>) => {
-      const data = res.data.items;
-      setItems(data);
-    });
-  }, []);
 
   const handleSubmitUpdate = async (
     editedTitle: string,
@@ -118,22 +112,65 @@ function App() {
     setItems([...items, newItem]);
   };
 
+  useEffect(() => {
+    const url = createEndPoint();
+    setEndPoint(url);
+    const options: AxiosRequestConfig = {
+      url: `${url}task/v1/list/${user?.sub}`,
+      method: "POST",
+    };
+
+    axios(options).then((res: AxiosResponse<Tasks>) => {
+      const data = res.data.items;
+      setItems(data);
+    });
+  }, [user?.sub]);
+
+  if (isLoading) {
+    return <div>Loading ...</div>;
+  }
+
   return (
-    <Box className="App" sx={{ p: 1 }}>
-      <CreateField updateItem={updateItem} />
-      <List>
-        {items.map(({ slug, title, ID, completed }) => (
-          <TaskList
-            key={slug}
-            handleDelete={handleDelete}
-            handleUpdate={handleUpdate}
-            handleComplete={handleComplete}
-            ID={ID}
-            title={title}
-            checked={completed}
-          />
-        ))}
-      </List>
+    <Box className="App">
+      {!isAuthenticated ? (
+        <Dialog open>
+          <DialogTitle>Log in to your account</DialogTitle>
+          <DialogContent>
+            <DialogContentText>ログインをしてください。</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <AuthButton />
+          </DialogActions>
+        </Dialog>
+      ) : (
+        <AppBar position="static" color="transparent">
+          <Toolbar>
+            <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
+              Todo.app
+            </Typography>
+            <AuthButton />
+          </Toolbar>
+        </AppBar>
+      )}
+      {isAuthenticated && (
+        <Box sx={{ p: 1 }}>
+          <CreateField updateItem={updateItem} userId={user?.sub!} />
+          <List>
+            {items.map(({ slug, title, ID, completed }) => (
+              <TaskList
+                key={slug}
+                handleDelete={handleDelete}
+                handleUpdate={handleUpdate}
+                handleComplete={handleComplete}
+                ID={ID}
+                title={title}
+                checked={completed}
+              />
+            ))}
+          </List>
+        </Box>
+      )}
+
       <Dialog
         open={update}
         sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
