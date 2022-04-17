@@ -1,13 +1,17 @@
 import React, { useRef, useState, useEffect } from "react";
 import {
+  AppBar,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   List,
+  Toolbar,
   TextField,
+  Typography,
 } from "@mui/material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -28,10 +32,6 @@ type Tasks = {
   items: Task[];
 };
 
-type Response = {
-  session: string;
-};
-
 function App() {
   const { loginWithRedirect, logout, isAuthenticated, isLoading, user } =
     useAuth0();
@@ -42,11 +42,6 @@ function App() {
   const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
   const [endPoint, setEndPoint] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [session, setSession] = useState("");
-  // const [user, setUser] = useState<User>({ name: "", email: "", image: "" });
   const titleRef = useRef<HTMLInputElement>(null);
   const createEndPoint = () => {
     let url = "";
@@ -118,27 +113,6 @@ function App() {
     setItems([...items, newItem]);
   };
 
-  const clickCreate = async () => {
-    await axios.post(`${endPoint}user/v1/signup`, {
-      username,
-      email,
-      password,
-    });
-  };
-  const clickLogin = async () => {
-    await axios
-      .post(`${endPoint}user/v1/login`, {
-        username: "*",
-        email,
-        password,
-      })
-      .then((res: AxiosResponse<Response>) => {
-        setSession(res.data.session);
-      });
-  };
-
-  const clickLogout = () => {};
-
   useEffect(() => {
     const url = createEndPoint();
     setEndPoint(url);
@@ -158,65 +132,53 @@ function App() {
   }
 
   return (
-    <Box className="App" sx={{ p: 1 }}>
+    <Box className="App">
       {!isAuthenticated ? (
-        <Button variant="contained" onClick={() => loginWithRedirect()}>
-          Login
-        </Button>
+        <Dialog open>
+          <DialogTitle>Log in to your account</DialogTitle>
+          <DialogContent>
+            <DialogContentText>ログインをしてください。</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={() => loginWithRedirect()}>
+              Login
+            </Button>
+          </DialogActions>
+        </Dialog>
       ) : (
-        <Button
-          variant="contained"
-          onClick={() => logout({ returnTo: window.location.origin })}
-        >
-          Logout
-        </Button>
+        <AppBar position="static" color="transparent">
+          <Toolbar>
+            <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
+              Todo.app
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => logout({ returnTo: window.location.origin })}
+            >
+              Logout
+            </Button>
+          </Toolbar>
+        </AppBar>
+      )}
+      {isAuthenticated && (
+        <Box sx={{ p: 1 }}>
+          <CreateField updateItem={updateItem} userId={user?.sub!} />
+          <List>
+            {items.map(({ slug, title, ID, completed }) => (
+              <TaskList
+                key={slug}
+                handleDelete={handleDelete}
+                handleUpdate={handleUpdate}
+                handleComplete={handleComplete}
+                ID={ID}
+                title={title}
+                checked={completed}
+              />
+            ))}
+          </List>
+        </Box>
       )}
 
-      <TextField
-        label="username"
-        variant="outlined"
-        name="username"
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      <TextField
-        label="email"
-        variant="outlined"
-        name="email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <TextField
-        label="password"
-        variant="outlined"
-        name="password"
-        type="password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <Button variant="contained" onClick={() => clickCreate()}>
-        Create
-      </Button>
-      {session === "" ? (
-        <Button variant="contained" onClick={() => clickLogin()}>
-          Login
-        </Button>
-      ) : (
-        <Button variant="contained" onClick={() => clickLogout()}>
-          Logout
-        </Button>
-      )}
-      <CreateField updateItem={updateItem} userId={user?.sub!} />
-      <List>
-        {items.map(({ slug, title, ID, completed }) => (
-          <TaskList
-            key={slug}
-            handleDelete={handleDelete}
-            handleUpdate={handleUpdate}
-            handleComplete={handleComplete}
-            ID={ID}
-            title={title}
-            checked={completed}
-          />
-        ))}
-      </List>
       <Dialog
         open={update}
         sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
