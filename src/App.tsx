@@ -12,6 +12,7 @@ import {
   Toolbar,
   TextField,
   Typography,
+  CircularProgress,
 } from "@mui/material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -127,7 +128,19 @@ function App() {
   }, [user?.sub]);
 
   if (isLoading) {
-    return <div>Loading ...</div>;
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <CircularProgress thickness={4} size={80} />
+      </Box>
+    );
   }
 
   return (
