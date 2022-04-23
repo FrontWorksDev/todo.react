@@ -49,12 +49,13 @@ function CreateField({ updateItem, userId }: Props) {
       status: 1,
       userId,
     };
-    updateItem(taskData);
     setTask("");
 
-    console.log(taskData);
     axios
       .post(`${endPoint}task/v1/add`, taskData)
+      .then((res) => {
+        updateItem(res.data.items);
+      })
       .catch((err) => new Error(err));
   };
 
