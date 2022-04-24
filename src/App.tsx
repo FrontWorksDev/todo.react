@@ -13,7 +13,10 @@ import {
   TextField,
   Typography,
   CircularProgress,
+  Snackbar,
+  IconButton,
 } from "@mui/material";
+import { Close } from "@mui/icons-material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 import CreateField from "./components/CreateField";
@@ -39,6 +42,7 @@ function App() {
   const [items, setItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
   const [endPoint, setEndPoint] = useState("");
@@ -89,6 +93,7 @@ function App() {
       .delete(`${endPoint}task/v1/delete/${value}`)
       .catch((err) => new Error(err));
     setOpen(false);
+    setSnackbarOpen(true);
   };
 
   const handleUpdate = (id: number, title: string) => {
@@ -109,9 +114,24 @@ function App() {
     });
   };
 
+  const handleClose = () => {
+    setSnackbarOpen(false);
+  };
+
   const updateItem = (newItem: Task): void => {
     setItems([...items, newItem]);
   };
+
+  const action = (
+    <IconButton
+      size="small"
+      aria-label="close"
+      color="inherit"
+      onClick={handleClose}
+    >
+      <Close fontSize="small" />
+    </IconButton>
+  );
 
   useEffect(() => {
     const url = createEndPoint();
@@ -227,6 +247,15 @@ function App() {
           <Button onClick={() => handleOk()}>Yes</Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        message="Deleted Task"
+        action={action}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </Box>
   );
 }
