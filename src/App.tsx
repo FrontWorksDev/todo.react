@@ -21,6 +21,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
+import CompletedList from "./components/CompletedList";
 import AuthButton from "./components/AuthButton";
 
 type Task = {
@@ -40,6 +41,7 @@ type Tasks = {
 function App() {
   const { isAuthenticated, isLoading, user } = useAuth0();
   const [items, setItems] = useState<Task[]>([]);
+  const [completedItems, setCompletedItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -140,10 +142,18 @@ function App() {
       url: `${url}task/v1/list/${user?.sub}`,
       method: "POST",
     };
+    const completedOptions: AxiosRequestConfig = {
+      url: `${url}task/v1/completedList/${user?.sub}`,
+      method: "POST",
+    };
 
     axios(options).then((res: AxiosResponse<Tasks>) => {
       const data = res.data.items;
       setItems(data);
+    });
+    axios(completedOptions).then((res: AxiosResponse<Tasks>) => {
+      const data = res.data.items;
+      setCompletedItems(data);
     });
   }, [user?.sub]);
 
@@ -193,6 +203,18 @@ function App() {
               <TaskList
                 key={slug}
                 handleDelete={handleDelete}
+                handleUpdate={handleUpdate}
+                handleComplete={handleComplete}
+                ID={ID}
+                title={title}
+                checked={completed}
+              />
+            ))}
+          </List>
+          <List>
+            {completedItems.map(({ slug, title, ID, completed }) => (
+              <CompletedList
+                key={slug}
                 handleUpdate={handleUpdate}
                 handleComplete={handleComplete}
                 ID={ID}
