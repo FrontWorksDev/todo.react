@@ -71,7 +71,13 @@ function App() {
     const updateItem = items.map((item) =>
       item.ID === value ? Object.assign(item, { title: editedTitle }) : item
     );
+    const updateCompletedItem = completedItems.map((completedItem) =>
+      completedItem.ID === value
+        ? Object.assign(completedItem, { title: editedTitle })
+        : completedItem
+    );
     setItems(updateItem);
+    setCompletedItems(updateCompletedItem);
     await axios.put(`${endPoint}task/v1/update/${value}`, {
       title: editedTitle,
     });
@@ -110,7 +116,12 @@ function App() {
     const updateItem = items.map((item) =>
       item.ID === id ? Object.assign(item, { completed: true }) : item
     );
-    setItems(updateItem);
+    const removeCompletedItem = updateItem.filter(
+      (item) => item.completed !== true
+    );
+    const competedItem = updateItem.filter((item) => item.ID === id);
+    setItems(removeCompletedItem);
+    setCompletedItems([...completedItems, ...competedItem]);
     await axios.put(`${endPoint}task/v1/update/${id}`, {
       completed: true,
     });
@@ -153,6 +164,7 @@ function App() {
     });
     axios(completedOptions).then((res: AxiosResponse<Tasks>) => {
       const data = res.data.items;
+      console.log(data);
       setCompletedItems(data);
     });
   }, [user?.sub]);
