@@ -21,6 +21,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
+import CompletedList from "./components/CompletedList";
 import AuthButton from "./components/AuthButton";
 
 type Task = {
@@ -40,6 +41,7 @@ type Tasks = {
 function App() {
   const { isAuthenticated, isLoading, user } = useAuth0();
   const [items, setItems] = useState<Task[]>([]);
+  const [completedItems, setCompletedItems] = useState<Task[]>([]);
   const [task, setTask] = useState("");
   const [open, setOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -69,7 +71,13 @@ function App() {
     const updateItem = items.map((item) =>
       item.ID === value ? Object.assign(item, { title: editedTitle }) : item
     );
+    const updateCompletedItem = completedItems.map((completedItem) =>
+      completedItem.ID === value
+        ? Object.assign(completedItem, { title: editedTitle })
+        : completedItem
+    );
     setItems(updateItem);
+    setCompletedItems(updateCompletedItem);
     await axios.put(`${endPoint}task/v1/update/${value}`, {
       title: editedTitle,
     });
@@ -108,9 +116,33 @@ function App() {
     const updateItem = items.map((item) =>
       item.ID === id ? Object.assign(item, { completed: true }) : item
     );
-    setItems(updateItem);
+    const removeCompletedItem = updateItem.filter(
+      (item) => item.completed !== true
+    );
+    const completedItem = updateItem.filter((item) => item.ID === id);
+    setItems(removeCompletedItem);
+    setCompletedItems([...completedItems, ...completedItem]);
     await axios.put(`${endPoint}task/v1/update/${id}`, {
       completed: true,
+      title: completedItem[0].title,
+    });
+  };
+
+  const handleUndoComplete = async (id: number) => {
+    setValue(id);
+
+    const updateItem = completedItems.map((item) =>
+      item.ID === id ? Object.assign(item, { completed: false }) : item
+    );
+    const removeCompletedItem = updateItem.filter(
+      (item) => item.completed !== false
+    );
+    const completedItem = updateItem.filter((item) => item.ID === id);
+    setItems([...items, ...completedItem]);
+    setCompletedItems(removeCompletedItem);
+    await axios.put(`${endPoint}task/v1/update/${id}`, {
+      completed: false,
+      title: completedItem[0].title,
     });
   };
 
@@ -140,10 +172,18 @@ function App() {
       url: `${url}task/v1/list/${user?.sub}`,
       method: "POST",
     };
+    const completedOptions: AxiosRequestConfig = {
+      url: `${url}task/v1/completedList/${user?.sub}`,
+      method: "POST",
+    };
 
     axios(options).then((res: AxiosResponse<Tasks>) => {
       const data = res.data.items;
       setItems(data);
+    });
+    axios(completedOptions).then((res: AxiosResponse<Tasks>) => {
+      const data = res.data.items;
+      setCompletedItems(data);
     });
   }, [user?.sub]);
 
@@ -195,6 +235,18 @@ function App() {
                 handleDelete={handleDelete}
                 handleUpdate={handleUpdate}
                 handleComplete={handleComplete}
+                ID={ID}
+                title={title}
+                checked={completed}
+              />
+            ))}
+          </List>
+          <List>
+            {completedItems.map(({ slug, title, ID, completed }) => (
+              <CompletedList
+                key={slug}
+                handleUpdate={handleUpdate}
+                handleUndoComplete={handleUndoComplete}
                 ID={ID}
                 title={title}
                 checked={completed}
