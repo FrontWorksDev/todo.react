@@ -119,11 +119,30 @@ function App() {
     const removeCompletedItem = updateItem.filter(
       (item) => item.completed !== true
     );
-    const competedItem = updateItem.filter((item) => item.ID === id);
+    const completedItem = updateItem.filter((item) => item.ID === id);
     setItems(removeCompletedItem);
-    setCompletedItems([...completedItems, ...competedItem]);
+    setCompletedItems([...completedItems, ...completedItem]);
     await axios.put(`${endPoint}task/v1/update/${id}`, {
       completed: true,
+      title: completedItem[0].title,
+    });
+  };
+
+  const handleUndoComplete = async (id: number) => {
+    setValue(id);
+
+    const updateItem = completedItems.map((item) =>
+      item.ID === id ? Object.assign(item, { completed: false }) : item
+    );
+    const removeCompletedItem = updateItem.filter(
+      (item) => item.completed !== false
+    );
+    const completedItem = updateItem.filter((item) => item.ID === id);
+    setItems([...items, ...completedItem]);
+    setCompletedItems(removeCompletedItem);
+    await axios.put(`${endPoint}task/v1/update/${id}`, {
+      completed: false,
+      title: completedItem[0].title,
     });
   };
 
@@ -164,7 +183,6 @@ function App() {
     });
     axios(completedOptions).then((res: AxiosResponse<Tasks>) => {
       const data = res.data.items;
-      console.log(data);
       setCompletedItems(data);
     });
   }, [user?.sub]);
@@ -228,7 +246,7 @@ function App() {
               <CompletedList
                 key={slug}
                 handleUpdate={handleUpdate}
-                handleComplete={handleComplete}
+                handleUndoComplete={handleUndoComplete}
                 ID={ID}
                 title={title}
                 checked={completed}

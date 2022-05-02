@@ -8,7 +8,7 @@ import {
 
 type Props = {
   handleUpdate: Function;
-  handleComplete: Function;
+  handleUndoComplete: Function;
   ID: number;
   title: string;
   checked: boolean;
@@ -16,7 +16,7 @@ type Props = {
 
 function CompletedList({
   handleUpdate,
-  handleComplete,
+  handleUndoComplete,
   ID,
   title,
   checked,
@@ -33,7 +33,7 @@ function CompletedList({
     <ListItem>
       <Checkbox
         aria-label="Complete"
-        onClick={() => handleComplete(ID)}
+        onClick={() => handleUndoComplete(ID)}
         checked={checked}
       />
       <ListItemButton onClick={() => handleUpdate(ID, title)}>
