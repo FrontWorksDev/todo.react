@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import {
   AppBar,
   Box,
@@ -15,10 +15,13 @@ import {
   CircularProgress,
   Snackbar,
   IconButton,
+  CssBaseline,
+  useMediaQuery,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { Close, DarkMode, LightMode } from "@mui/icons-material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
 import CompletedList from "./components/CompletedList";
@@ -48,6 +51,10 @@ function App() {
   const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
   const [endPoint, setEndPoint] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(
+    useMediaQuery("(prefers-color-scheme: dark)", { noSsr: true })
+  );
+  const pastTheme = localStorage.getItem("theme");
   const titleRef = useRef<HTMLInputElement>(null);
   const createEndPoint = () => {
     let url = "";
@@ -59,6 +66,20 @@ function App() {
 
     setEndPoint(url);
     return url;
+  };
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: isDarkMode ? "dark" : "light",
+        },
+      }),
+    [isDarkMode]
+  );
+
+  const handleChangeTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    localStorage.setItem("theme", !isDarkMode ? "dark" : "light");
   };
 
   const handleSubmitUpdate = async (
@@ -166,6 +187,14 @@ function App() {
   );
 
   useEffect(() => {
+    if (pastTheme === "dark") {
+      setIsDarkMode(true);
+    } else if (pastTheme === "light") {
+      setIsDarkMode(false);
+    }
+  }, []);
+
+  useEffect(() => {
     const url = createEndPoint();
     setEndPoint(url);
     const options: AxiosRequestConfig = {
@@ -204,111 +233,117 @@ function App() {
   }
 
   return (
-    <Box className="App">
-      {!isAuthenticated ? (
-        <Dialog open>
-          <DialogTitle>Log in to your account</DialogTitle>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box className="App">
+        {!isAuthenticated ? (
+          <Dialog open>
+            <DialogTitle>Log in to your account</DialogTitle>
+            <DialogContent>
+              <DialogContentText>ログインをしてください。</DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <AuthButton />
+            </DialogActions>
+          </Dialog>
+        ) : (
+          <AppBar position="static" color="transparent">
+            <Toolbar>
+              <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
+                Todo.app
+              </Typography>
+              <IconButton value="light" onClick={() => handleChangeTheme()}>
+                {isDarkMode ? <DarkMode /> : <LightMode />}
+              </IconButton>
+              <AuthButton />
+            </Toolbar>
+          </AppBar>
+        )}
+        {isAuthenticated && (
+          <Box sx={{ p: 1 }}>
+            <CreateField updateItem={updateItem} userId={user?.sub!} />
+            <List>
+              {items.map(({ slug, title, ID, completed }) => (
+                <TaskList
+                  key={slug}
+                  handleDelete={handleDelete}
+                  handleUpdate={handleUpdate}
+                  handleComplete={handleComplete}
+                  ID={ID}
+                  title={title}
+                  checked={completed}
+                />
+              ))}
+            </List>
+            <List>
+              {completedItems.map(({ slug, title, ID, completed }) => (
+                <CompletedList
+                  key={slug}
+                  handleUpdate={handleUpdate}
+                  handleUndoComplete={handleUndoComplete}
+                  ID={ID}
+                  title={title}
+                  checked={completed}
+                />
+              ))}
+            </List>
+          </Box>
+        )}
+
+        <Dialog
+          open={update}
+          sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
+          maxWidth="xs"
+          onClose={handleCancel}
+        >
+          <DialogTitle>Update</DialogTitle>
           <DialogContent>
-            <DialogContentText>ログインをしてください。</DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="name"
+              label="Title"
+              fullWidth
+              variant="standard"
+              defaultValue={task}
+              inputRef={titleRef}
+              onKeyPress={(e) => handleSubmitUpdate(titleRef.current!.value, e)}
+            />
           </DialogContent>
           <DialogActions>
-            <AuthButton />
+            <Button onClick={() => handleCancel()} color="error">
+              Cancel
+            </Button>
+            <Button onClick={() => handleSubmitUpdate(titleRef.current!.value)}>
+              Update
+            </Button>
           </DialogActions>
         </Dialog>
-      ) : (
-        <AppBar position="static" color="transparent">
-          <Toolbar>
-            <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
-              Todo.app
-            </Typography>
-            <AuthButton />
-          </Toolbar>
-        </AppBar>
-      )}
-      {isAuthenticated && (
-        <Box sx={{ p: 1 }}>
-          <CreateField updateItem={updateItem} userId={user?.sub!} />
-          <List>
-            {items.map(({ slug, title, ID, completed }) => (
-              <TaskList
-                key={slug}
-                handleDelete={handleDelete}
-                handleUpdate={handleUpdate}
-                handleComplete={handleComplete}
-                ID={ID}
-                title={title}
-                checked={completed}
-              />
-            ))}
-          </List>
-          <List>
-            {completedItems.map(({ slug, title, ID, completed }) => (
-              <CompletedList
-                key={slug}
-                handleUpdate={handleUpdate}
-                handleUndoComplete={handleUndoComplete}
-                ID={ID}
-                title={title}
-                checked={completed}
-              />
-            ))}
-          </List>
-        </Box>
-      )}
+        <Dialog
+          open={open}
+          sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
+          maxWidth="xs"
+        >
+          <DialogTitle>Do you want to delete the data?</DialogTitle>
 
-      <Dialog
-        open={update}
-        sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
-        maxWidth="xs"
-        onClose={handleCancel}
-      >
-        <DialogTitle>Update</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="name"
-            label="Title"
-            fullWidth
-            variant="standard"
-            defaultValue={task}
-            inputRef={titleRef}
-            onKeyPress={(e) => handleSubmitUpdate(titleRef.current!.value, e)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handleCancel()} color="error">
-            Cancel
-          </Button>
-          <Button onClick={() => handleSubmitUpdate(titleRef.current!.value)}>
-            Update
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        open={open}
-        sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
-        maxWidth="xs"
-      >
-        <DialogTitle>Do you want to delete the data?</DialogTitle>
+          <DialogActions>
+            <Button onClick={() => handleCancel()} color="error">
+              No
+            </Button>
+            <Button onClick={() => handleOk()}>Yes</Button>
+          </DialogActions>
+        </Dialog>
 
-        <DialogActions>
-          <Button onClick={() => handleCancel()} color="error">
-            No
-          </Button>
-          <Button onClick={() => handleOk()}>Yes</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        message="Deleted Task"
-        action={action}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      />
-    </Box>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          message="Deleted Task"
+          action={action}
+          onClose={handleClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        />
+      </Box>
+    </ThemeProvider>
   );
 }
 
