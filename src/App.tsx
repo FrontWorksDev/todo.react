@@ -18,7 +18,7 @@ import {
   CssBaseline,
   useMediaQuery,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { Close, DarkMode, LightMode } from "@mui/icons-material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -242,7 +242,9 @@ function App() {
               <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
                 Todo.app
               </Typography>
-              <Button onClick={() => handleChangeTheme()}>Theme</Button>
+              <IconButton value="light" onClick={() => handleChangeTheme()}>
+                {darkMode ? <DarkMode /> : <LightMode />}
+              </IconButton>
               <AuthButton />
             </Toolbar>
           </AppBar>
