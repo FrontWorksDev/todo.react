@@ -12,6 +12,7 @@ function AuthButton() {
     <Button
       variant="contained"
       onClick={() => logout({ returnTo: window.location.origin })}
+      sx={{ ml: 2 }}
     >
       Logout
     </Button>
