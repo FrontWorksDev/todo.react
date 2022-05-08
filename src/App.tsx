@@ -51,9 +51,10 @@ function App() {
   const [update, setUpdate] = useState(false);
   const [value, setValue] = useState(0);
   const [endPoint, setEndPoint] = useState("");
-  const [darkMode, setDarkMode] = useState(
+  const [isDarkMode, setIsDarkMode] = useState(
     useMediaQuery("(prefers-color-scheme: dark)", { noSsr: true })
   );
+  const pastTheme = localStorage.getItem("theme");
   const titleRef = useRef<HTMLInputElement>(null);
   const createEndPoint = () => {
     let url = "";
@@ -70,14 +71,15 @@ function App() {
     () =>
       createTheme({
         palette: {
-          mode: darkMode ? "dark" : "light",
+          mode: isDarkMode ? "dark" : "light",
         },
       }),
-    [darkMode]
+    [isDarkMode]
   );
 
   const handleChangeTheme = () => {
-    setDarkMode(!darkMode);
+    setIsDarkMode(!isDarkMode);
+    localStorage.setItem("theme", !isDarkMode ? "dark" : "light");
   };
 
   const handleSubmitUpdate = async (
@@ -185,6 +187,14 @@ function App() {
   );
 
   useEffect(() => {
+    if (pastTheme === "dark") {
+      setIsDarkMode(true);
+    } else if (pastTheme === "light") {
+      setIsDarkMode(false);
+    }
+  }, []);
+
+  useEffect(() => {
     const url = createEndPoint();
     setEndPoint(url);
     const options: AxiosRequestConfig = {
@@ -243,7 +253,7 @@ function App() {
                 Todo.app
               </Typography>
               <IconButton value="light" onClick={() => handleChangeTheme()}>
-                {darkMode ? <DarkMode /> : <LightMode />}
+                {isDarkMode ? <DarkMode /> : <LightMode />}
               </IconButton>
               <AuthButton />
             </Toolbar>
