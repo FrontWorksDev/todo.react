@@ -18,10 +18,12 @@ import {
   CssBaseline,
   useMediaQuery,
 } from "@mui/material";
+import { arrayMoveImmutable } from "array-move";
 import { Close, DarkMode, LightMode } from "@mui/icons-material";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { Draggable, Container, OnDropCallback } from "react-smooth-dnd";
 import CreateField from "./components/CreateField";
 import TaskList from "./components/TaskList";
 import CompletedList from "./components/CompletedList";
@@ -186,6 +188,10 @@ function App() {
     </IconButton>
   );
 
+  const onDrop: OnDropCallback = ({ removedIndex, addedIndex }) => {
+    setItems(arrayMoveImmutable(items, removedIndex!, addedIndex!));
+  };
+
   useEffect(() => {
     if (pastTheme === "dark") {
       setIsDarkMode(true);
@@ -263,17 +269,25 @@ function App() {
           <Box sx={{ p: 1 }}>
             <CreateField updateItem={updateItem} userId={user?.sub!} />
             <List>
-              {items.map(({ slug, title, ID, completed }) => (
-                <TaskList
-                  key={slug}
-                  handleDelete={handleDelete}
-                  handleUpdate={handleUpdate}
-                  handleComplete={handleComplete}
-                  ID={ID}
-                  title={title}
-                  checked={completed}
-                />
-              ))}
+              <Container
+                dragHandleSelector=".drag-handle"
+                lockAxis="y"
+                onDrop={onDrop}
+              >
+                {items.map(({ slug, title, ID, completed }) => (
+                  <Draggable key={ID}>
+                    <TaskList
+                      key={slug}
+                      handleDelete={handleDelete}
+                      handleUpdate={handleUpdate}
+                      handleComplete={handleComplete}
+                      ID={ID}
+                      title={title}
+                      checked={completed}
+                    />
+                  </Draggable>
+                ))}
+              </Container>
             </List>
             <List>
               {completedItems.map(({ slug, title, ID, completed }) => (

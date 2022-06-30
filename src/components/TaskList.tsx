@@ -44,6 +44,7 @@ function TaskList({
           <DeleteIcon />
         </IconButton>
       }
+      className="drag-handle"
     >
       <Checkbox
         aria-label="Complete"
