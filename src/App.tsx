@@ -33,6 +33,7 @@ type Task = {
   ID: number;
   slug: string;
   title: string;
+  position: number;
   completed: boolean;
   CreatedAt?: string;
   UpdatedAt?: string;
@@ -56,6 +57,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(
     useMediaQuery("(prefers-color-scheme: dark)", { noSsr: true })
   );
+  const [lastPosition, setLastPosition] = useState(0);
   const pastTheme = localStorage.getItem("theme");
   const titleRef = useRef<HTMLInputElement>(null);
   const createEndPoint = () => {
@@ -188,8 +190,9 @@ function App() {
     </IconButton>
   );
 
-  const onDrop: OnDropCallback = ({ removedIndex, addedIndex }) => {
+  const onDrop: OnDropCallback = async ({ removedIndex, addedIndex }) => {
     setItems(arrayMoveImmutable(items, removedIndex!, addedIndex!));
+    // await axios.put(`${endPoint}task/v1/update/`)
   };
 
   useEffect(() => {
@@ -214,6 +217,10 @@ function App() {
 
     axios(options).then((res: AxiosResponse<Tasks>) => {
       const data = res.data.items;
+      const lastData = data.slice(-1)[0];
+      if (lastData) {
+        setLastPosition(lastData.position);
+      }
       setItems(data);
     });
     axios(completedOptions).then((res: AxiosResponse<Tasks>) => {
@@ -267,14 +274,18 @@ function App() {
         )}
         {isAuthenticated && (
           <Box sx={{ p: 1 }}>
-            <CreateField updateItem={updateItem} userId={user?.sub!} />
+            <CreateField
+              updateItem={updateItem}
+              userId={user?.sub!}
+              lastPosition={lastPosition}
+            />
             <List>
               <Container
                 dragHandleSelector=".drag-handle"
                 lockAxis="y"
                 onDrop={onDrop}
               >
-                {items.map(({ slug, title, ID, completed }) => (
+                {items.map(({ slug, title, ID, completed, position }) => (
                   <Draggable key={ID}>
                     <TaskList
                       key={slug}
@@ -284,6 +295,7 @@ function App() {
                       ID={ID}
                       title={title}
                       checked={completed}
+                      position={position}
                     />
                   </Draggable>
                 ))}

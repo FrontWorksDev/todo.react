@@ -10,6 +10,7 @@ type Task = {
   title: string;
   status: number;
   userId: string;
+  position: number;
   CreatedAt?: string;
   UpdatedAt?: string;
   DeletedAt?: string | null;
@@ -18,9 +19,10 @@ type Task = {
 type Props = {
   updateItem: Function;
   userId: string;
+  lastPosition: number;
 };
 
-function CreateField({ updateItem, userId }: Props) {
+function CreateField({ updateItem, userId, lastPosition }: Props) {
   const [task, setTask] = useState("");
   const [endPoint, setEndPoint] = useState("");
 
@@ -48,6 +50,7 @@ function CreateField({ updateItem, userId }: Props) {
       title: newTask,
       status: 1,
       userId,
+      position: lastPosition * 2,
     };
     setTask("");
 

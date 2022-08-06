@@ -15,6 +15,7 @@ type Props = {
   ID: number;
   title: string;
   checked: boolean;
+  position: number;
 };
 
 function TaskList({
@@ -24,6 +25,7 @@ function TaskList({
   ID,
   title,
   checked,
+  position,
 }: Props) {
   const [listColor, setListColor] = useState({});
 
@@ -45,6 +47,7 @@ function TaskList({
         </IconButton>
       }
       className="drag-handle"
+      data-position={position}
     >
       <Checkbox
         aria-label="Complete"
